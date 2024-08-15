@@ -11,7 +11,13 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      #  configure Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
       - name: Login to docker hub
         run : echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
@@ -33,4 +39,4 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/api_gnhd:latest
             docker stop api_gnhd || true
             docker rm api_gnhd || true
-            docker run -d --name api_gnhd -p 80:80 ${{ secrets.DOCKER_USERNAME }}/api_gnhd:latest
+            sudo docker run -d --name api_gnhd -p 80:80 ${{ secrets.DOCKER_USERNAME }}/api_gnhd:latest
