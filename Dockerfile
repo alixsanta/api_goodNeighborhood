@@ -21,19 +21,13 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Copier les fichiers de l'application
-COPY . /Users/ALX/api_goodNeighborhood/api
-
-# Installer les dépendances PHP avec Composer
-RUN composer install --no-scripts --no-interaction --optimize-autoloader
-
-# Configurer les permissions
-RUN chown -R www-data:www-data /Users/ALX/api_goodNeighborhood/api/var /Users/ALX/api_goodNeighborhood/api/vendor /Users/ALX/api_goodNeighborhood/api/public
+COPY . /Users/ALX/api_goodNeighborhood
 
 # Activer le module Apache rewrite
 RUN a2enmod rewrite
 
 # Exposer le port 80
-EXPOSE 80
+EXPOSE 8000
 
 # Définir le point d'entrée
 CMD ["apache2-foreground"]
