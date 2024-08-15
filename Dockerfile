@@ -1,6 +1,9 @@
 # Utiliser une image de base PHP 8.3 avec Apache
 FROM php:8.3-apache
 
+# Définir le répertoire de travail
+WORKDIR /Users/ALX/api_goodNeighborhood
+
 # Installer les dépendances nécessaires
 RUN apt-get update && apt-get install -y \
     git \
@@ -18,13 +21,13 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Copier les fichiers de l'application
-COPY . /var/www/html
+COPY . /Users/ALX/api_goodNeighborhood/api
 
 # Installer les dépendances PHP avec Composer
 RUN composer install --no-scripts --no-interaction --optimize-autoloader
 
 # Configurer les permissions
-RUN chown -R www-data:www-data /var/www/html/var /var/www/html/vendor /var/www/html/public
+RUN chown -R www-data:www-data /Users/ALX/api_goodNeighborhood/api/var /Users/ALX/api_goodNeighborhood/api/vendor /Users/ALX/api_goodNeighborhood/api/public
 
 # Activer le module Apache rewrite
 RUN a2enmod rewrite

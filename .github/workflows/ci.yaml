@@ -17,10 +17,10 @@ jobs:
         run : echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
       - name: Build the Docker image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/keep-this-client:latest .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/api_gnhd:latest .
 
       - name: Push the Docker image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/keep-this-client:latest
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/api_gnhd:latest
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.7
@@ -30,7 +30,7 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT }}
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/keep-this-client:latest
-            docker stop keep-this-client || true
-            docker rm keep-this-client || true
-            docker run -d --name keep-this-client -p 80:80 ${{ secrets.DOCKER_USERNAME }}/keep-this-client:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/api_gnhd:latest
+            docker stop api_gnhd || true
+            docker rm api_gnhd || true
+            docker run -d --name api_gnhd -p 80:80 ${{ secrets.DOCKER_USERNAME }}/api_gnhd:latest
