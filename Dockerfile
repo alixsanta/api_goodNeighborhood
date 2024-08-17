@@ -26,7 +26,7 @@ COPY . /Users/ALX/api_goodNeighborhood
 # Activer le module Apache rewrite
 RUN a2enmod rewrite
 
-# Exposer le port 80
+# Exposer le port 8000
 EXPOSE 8000
 
 # Définir le point d'entrée
