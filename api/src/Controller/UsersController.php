@@ -25,7 +25,7 @@ class UsersController extends AbstractController
     }
 
     // Display user
-    #[Route("/user/{id}", name="user_show", methods={"GET"})]
+    #[Route("/user/{id}", name: "user_show")]
 
     public function show(Users $user): Response
     {
@@ -35,7 +35,7 @@ class UsersController extends AbstractController
     }
 
     // Add user
-    #[Route("/user/new", name="user_new", methods={"GET", "POST"})]
+    #[Route("/user/new", name: "user_new")]
 
      public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
@@ -57,7 +57,7 @@ class UsersController extends AbstractController
     }
 
     // Update user
-    #[Route("/user/{id}/edit", name="user_edit", methods={"GET", "POST"})]
+    #[Route("/user/{id}/edit", name: "user_edit")]
 
     public function edit(Request $request, Users $user, EntityManagerInterface $entityManager): Response
     {
@@ -77,11 +77,11 @@ class UsersController extends AbstractController
     }
 
     // Delete user
-    #[Route("/user/{id}", name="user_delete", methods={"POST"})]
+    #[Route("/user/{id}", name: "user_delete")]
 
-     public function delete(Request $request, User $user, EntityManagerInterface $entityManager): Response
+     public function delete(Request $request, Users $user, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$user->getUUIDUser(), $request->request->get('_token'))) {
             $entityManager->remove($user);
             $entityManager->flush();
         }
