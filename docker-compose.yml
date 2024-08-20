@@ -1,9 +1,9 @@
-version: '3'
+version: '3.8'
 services:
   api:
     image: alixsanta/api_gnhd
     environment:
-      DB_URL: url_to_db
+      DB_URL: postgres://postgres:Nemesis@db:5432/GNHD
     depends_on:
       - db
 
@@ -12,6 +12,7 @@ services:
     environment:
       POSTGRES_PASSWORD: Nemesis
       POSTGRES_USER: postgres
+      POSTGRES_DB: GNHD
     ports:
       - "5432:5432"
     volumes:
