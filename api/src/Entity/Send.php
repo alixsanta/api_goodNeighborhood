@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\User;
 use App\Repository\SendRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -13,8 +14,9 @@ class Send
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'sends')]
-    private ?Users $UUID_user = null;
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'sends')]
+    #[ORM\JoinColumn(name: 'user_uuid', referencedColumnName: 'UUID_user')]
+    private ?User $UUID_user = null;
 
     #[ORM\ManyToOne(inversedBy: 'sends')]
     private ?Message $UUID_message = null;
@@ -24,12 +26,12 @@ class Send
         return $this->id;
     }
 
-    public function getUUIDUser(): ?Users
+    public function getUser(): ?User
     {
         return $this->UUID_user;
     }
 
-    public function setUUIDUser(?Users $UUID_user): static
+    public function setUser(?User $UUID_user): static
     {
         $this->UUID_user = $UUID_user;
 

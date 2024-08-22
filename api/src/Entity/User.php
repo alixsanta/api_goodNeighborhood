@@ -2,18 +2,26 @@
 
 namespace App\Entity;
 
-use App\Repository\UsersRepository;
+use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Uuid;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Ramsey\Uuid\Doctrine\UuidGenerator;
+use Ramsey\Uuid\UuidInterface;
 
-#[ORM\Entity(repositoryClass: UsersRepository::class)]
-class Users
+#[ORM\Entity(repositoryClass: UserRepository::class)]
+class User
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(length: 50)]
-    private ?string $UUID_user = null;
+    #[ORM\Column(type: UuidType::NAME, unique: true)]
+    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
+    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    //#[ORM\Column(length: 50)]
+    private Uuid $UUID_user;
+
+    //private UuidInterface $UUID_user;
 
     #[ORM\Column(length: 50)]
     private ?string $first_name_user = null;
@@ -33,28 +41,36 @@ class Users
     /**
      * @var Collection<int, Send>
      */
-    #[ORM\OneToMany(targetEntity: Send::class, mappedBy: 'UUID_user')]
+    #[ORM\OneToMany(targetEntity: Send::class, mappedBy: 'user')]
     private Collection $sends;
 
     /**
      * @var Collection<int, Belong>
      */
-    #[ORM\OneToMany(targetEntity: Belong::class, mappedBy: 'UUID_user')]
+    #[ORM\OneToMany(targetEntity: Belong::class, mappedBy: 'user')]
     private Collection $belongs;
+
+    /**
+     * @var Collection<int, Recieve>
+     */
+    #[ORM\OneToMany(targetEntity: Recieve::class, mappedBy: 'user')]
+    private Collection $recieves;
 
     public function __construct()
     {
+        $UUID_user = Uuid::v6();
         $this->sends = new ArrayCollection();
         $this->belongs = new ArrayCollection();
+        $this->recieves = new ArrayCollection();
     }
 
 
-    public function getUUIDUser(): ?string
+    public function getUUIDUser(): ?Uuid
     {
         return $this->UUID_user;
     }
 
-    public function setUUIDUser(string $UUID_user): static
+    public function setUUIDUser(UuidInterface $UUID_user): self
     {
         $this->UUID_user = $UUID_user;
 
@@ -132,7 +148,7 @@ class Users
     {
         if (!$this->sends->contains($send)) {
             $this->sends->add($send);
-            $send->setUUIDUser($this);
+            $send->setUser($this);
         }
 
         return $this;
@@ -142,8 +158,8 @@ class Users
     {
         if ($this->sends->removeElement($send)) {
             // set the owning side to null (unless already changed)
-            if ($send->getUUIDUser() === $this) {
-                $send->setUUIDUser(null);
+            if ($send->getUser() === $this) {
+                $send->setUser(null);
             }
         }
 
@@ -162,7 +178,7 @@ class Users
     {
         if (!$this->belongs->contains($belong)) {
             $this->belongs->add($belong);
-            $belong->setUUIDUser($this);
+            $belong->setUser($this);
         }
 
         return $this;
@@ -172,8 +188,30 @@ class Users
     {
         if ($this->belongs->removeElement($belong)) {
             // set the owning side to null (unless already changed)
-            if ($belong->getUUIDUser() === $this) {
-                $belong->setUUIDUser(null);
+            if ($belong->getUser() === $this) {
+                $belong->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function addRecieve(Recieve $recieve): static
+    {
+        if (!$this->recieves->contains($recieve)) {
+            $this->recieves->add($recieve);
+            $recieve->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRecieve(Recieve $recieve): static
+    {
+        if ($this->recieves->removeElement($recieve)) {
+            // set the owning side to null (unless already changed)
+            if ($recieve->getUser() === $this) {
+                $recieve->setUser(null);
             }
         }
 

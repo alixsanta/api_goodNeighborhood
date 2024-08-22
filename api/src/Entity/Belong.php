@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use App\Entity\User;
+use App\Entity\ResidentGroup;
 use App\Repository\BelongRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -10,11 +12,15 @@ class Belong
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
+    #[ORM\Column(type: 'integer')]
+    private $id;
+    //private ?int $id = null;
+    
     #[ORM\ManyToOne(inversedBy: 'belongs')]
-    private ?Users $UUID_user = null;
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'belongs')]
+    #[ORM\JoinColumn(name: 'user_uuid', referencedColumnName: 'UUID_user')]
+    private $user;
+    private ?User $UUID_user = null;
 
     #[ORM\ManyToOne(inversedBy: 'belongs')]
     private ?ResidentGroup $UUID_group = null;
@@ -23,13 +29,13 @@ class Belong
     {
         return $this->id;
     }
-
-    public function getUUIDUser(): ?Users
+    
+    public function getUser(): ?User
     {
         return $this->UUID_user;
     }
 
-    public function setUUIDUser(?Users $UUID_user): static
+    public function setUser(?User $UUID_user): self
     {
         $this->UUID_user = $UUID_user;
 
