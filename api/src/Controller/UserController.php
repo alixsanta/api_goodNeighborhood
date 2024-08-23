@@ -11,12 +11,16 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Security\Core\Security;
+use Doctrine\Common\Collections\ArrayCollection;
 
 class UserController extends AbstractController
 {
     // Display user
     #[Route('api/user', name: 'user', methods: ['GET'])]
-    public function getUserList(UserRepository $userRepository): JsonResponse
+    public function getUserList(UserRepository $userRepository, Security $security): JsonResponse
     {
         $userList = $userRepository->findAll();
         return new JsonResponse([
@@ -87,5 +91,39 @@ class UserController extends AbstractController
         }
 
         return $this->redirectToRoute('user_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/api/create', name: 'create', methods: ['POST'])]
+    public function create(Request $request, EntityManagerInterface $entityManager, SerializerInterface $serializer, UserPasswordHasherInterface $passwordHasher): JsonResponse
+    {
+        $requestData = json_decode($request->getContent(), true);
+        
+        $firstName = $requestData['firstName'] ?? null;
+        $lastName = $requestData['lastName'] ?? null;
+        $mail = $requestData['mail'] ?? null;
+        $plaintextPassword = $requestData['password'] ?? null;
+        $imageProfil = $requestData['imageProfil'] ?? null;
+        $roles = $requestData['roles'] ?? null;
+
+        if (!$firstName || !$lastName || !$mail || !$plaintextPassword) {
+            return new JsonResponse(['error' => 'Missing required fields'], 400);
+        }
+
+        $user = new User();
+        $hashedPassword = $passwordHasher->hashPassword($user, $plaintextPassword);
+
+        $user->setFirstNameUser($firstName);
+        $user->setLastNameUser($lastName);
+        $user->setMailUser($mail);
+        $user->setImageProfil($imageProfil);
+        $user->setPassword($hashedPassword);
+        $user->setRoles($roles);
+
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        $data = $serializer->serialize($user, 'json');
+
+        return new JsonResponse(['message' => 'Utilisateur créé avec succès', 'user' => json_decode($data)], 201);
     }
 }

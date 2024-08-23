@@ -16,7 +16,6 @@ class Belong
     private $id;
     //private ?int $id = null;
     
-    #[ORM\ManyToOne(inversedBy: 'belongs')]
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'belongs')]
     #[ORM\JoinColumn(name: 'user_uuid', referencedColumnName: 'UUID_user')]
     private $user;

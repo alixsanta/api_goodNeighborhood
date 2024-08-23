@@ -3,16 +3,21 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Ramsey\Uuid\Doctrine\UuidGenerator;
 use Ramsey\Uuid\UuidInterface;
 
+
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-class User
+#[ORM\Table(name: '`users`')]
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_MAIL_USER', fields: ['mailUser'])]
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\Column(type: UuidType::NAME, unique: true)]
@@ -21,7 +26,8 @@ class User
     //#[ORM\Column(length: 50)]
     private Uuid $UUID_user;
 
-    //private UuidInterface $UUID_user;
+    #[ORM\Column(length: 180)]
+    private ?string $mailUser = null;
 
     #[ORM\Column(length: 50)]
     private ?string $first_name_user = null;
@@ -32,13 +38,19 @@ class User
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $image_profil = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $mail_user = null;
-
-    #[ORM\Column(length: 250)]
-    private ?string $password_user = null;
+    /**
+     * @var list<string> The user roles
+     */
+    #[ORM\Column]
+    private array $roles = [];
 
     /**
+     * @var string The hashed password
+     */
+    #[ORM\Column]
+    private ?string $password = null;
+
+        /**
      * @var Collection<int, Send>
      */
     #[ORM\OneToMany(targetEntity: Send::class, mappedBy: 'user')]
@@ -64,7 +76,6 @@ class User
         $this->recieves = new ArrayCollection();
     }
 
-
     public function getUUIDUser(): ?Uuid
     {
         return $this->UUID_user;
@@ -73,6 +84,18 @@ class User
     public function setUUIDUser(UuidInterface $UUID_user): self
     {
         $this->UUID_user = $UUID_user;
+
+        return $this;
+    }
+
+    public function getMailUser(): ?string
+    {
+        return $this->mailUser;
+    }
+
+    public function setMailUser(string $mailUser): static
+    {
+        $this->mailUser = $mailUser;
 
         return $this;
     }
@@ -113,30 +136,56 @@ class User
         return $this;
     }
 
-    public function getMailUser(): ?string
-    {
-        return $this->mail_user;
-    }
-
-    public function setMailUser(string $mail_user): static
-    {
-        $this->mail_user = $mail_user;
-
-        return $this;
-    }
-
-    public function getPasswordUser(): ?string
-    {
-        return $this->password_user;
-    }
-
-    public function setPasswordUser(string $password_user): static
-    {
-        $this->password_user = $password_user;
-
-        return $this;
-    }
     /**
+     * A visual identifier that represents this user.
+     *
+     * @see UserInterface
+     */
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->mailUser;
+    }
+
+    /**
+     * @see UserInterface
+     *
+     * @return list<string>
+     */
+    public function getRoles(): array
+    {
+        $roles = $this->roles;
+        // guarantee every user at least has ROLE_USER
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
+    }
+
+    /**
+     * @param list<string> $roles
+     */
+    public function setRoles(array $roles): static
+    {
+        $this->roles = $roles;
+
+        return $this;
+    }
+
+    /**
+     * @see PasswordAuthenticatedUserInterface
+     */
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+
+    public function setPassword(string $password): static
+    {
+        $this->password = $password;
+
+        return $this;
+    }
+
+        /**
      * @return Collection<int, Send>
      */
     public function getSends(): Collection
@@ -216,5 +265,14 @@ class User
         }
 
         return $this;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function eraseCredentials(): void
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
+        // $this->plainPassword = null;
     }
 }
