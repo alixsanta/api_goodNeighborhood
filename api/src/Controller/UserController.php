@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Form\UserType;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -15,12 +14,14 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Core\Security;
 use Doctrine\Common\Collections\ArrayCollection;
+use Ramsey\Uuid\Nonstandard\Uuid;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer as NormalizerAbstractNormalizer;
 
 class UserController extends AbstractController
 {
     // Display user
     #[Route('api/user', name: 'user', methods: ['GET'])]
-    public function getUserList(UserRepository $userRepository, Security $security): JsonResponse
+    public function getUserList(UserRepository $userRepository): JsonResponse
     {
         $userList = $userRepository->findAll();
         return new JsonResponse([
@@ -38,47 +39,23 @@ class UserController extends AbstractController
         ]);
     }
 
-    // Add user
-    #[Route("/user/new", name:"user_new")]
-
-     public function createUser(Request $request, EntityManagerInterface $entityManager): Response
+    // Update a user
+    #[Route('api/user/{id}', name: 'updateUser', methods: ['PUT'])]
+    public function updateUser(User $user, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UserRepository $userRepository): JsonResponse
     {
-        $user = new User();
-        $form = $this->createForm(UserType::class, $user);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($user);
-            $entityManager->flush();
-
-            return $this->redirectToRoute('user_index', [], Response::HTTP_SEE_OTHER);
+        if (!$user) {
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
         }
-
-        return $this->render('user/new.html.twig', [
-            'user' => $user,
-            'form' => $form->createView(),
+        $user = $serializer->deserialize($request->getContent(), User::class, 'json', [
+            NormalizerAbstractNormalizer::OBJECT_TO_POPULATE => $user
         ]);
+
+        $entityManager->flush();
+
+        $jsonUser = $serializer->serialize($user, 'json');
+        return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
     }
 
-    // Update user
-    #[Route("/user/{id}/edit", name:"user_edit")]
-
-    public function edit(Request $request, User $user, EntityManagerInterface $entityManager): Response
-    {
-        $form = $this->createForm(UserType::class, $user);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            return $this->redirectToRoute('user_index', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->render('user/edit.html.twig', [
-            'user' => $user,
-            'form' => $form->createView(),
-        ]);
-    }
 
     // Delete user
     #[Route("/user/{id}", name:"user_delete")]
@@ -93,6 +70,7 @@ class UserController extends AbstractController
         return $this->redirectToRoute('user_index', [], Response::HTTP_SEE_OTHER);
     }
 
+    // Create User
     #[Route('/api/create', name: 'create', methods: ['POST'])]
     public function create(Request $request, EntityManagerInterface $entityManager, SerializerInterface $serializer, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
@@ -103,7 +81,6 @@ class UserController extends AbstractController
         $mail = $requestData['mail'] ?? null;
         $plaintextPassword = $requestData['password'] ?? null;
         $imageProfil = $requestData['imageProfil'] ?? null;
-        $roles = $requestData['roles'] ?? null;
 
         if (!$firstName || !$lastName || !$mail || !$plaintextPassword) {
             return new JsonResponse(['error' => 'Missing required fields'], 400);
@@ -117,7 +94,6 @@ class UserController extends AbstractController
         $user->setMailUser($mail);
         $user->setImageProfil($imageProfil);
         $user->setPassword($hashedPassword);
-        $user->setRoles($roles);
 
         $entityManager->persist($user);
         $entityManager->flush();
