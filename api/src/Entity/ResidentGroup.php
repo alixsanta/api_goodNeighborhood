@@ -6,17 +6,20 @@ use App\Repository\ResidentGroupRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Uuid;
+use Symfony\Bridge\Doctrine\Types\UuidType;
+use Ramsey\Uuid\Doctrine\UuidGenerator;
+use Ramsey\Uuid\UuidInterface;
 
 #[ORM\Entity(repositoryClass: ResidentGroupRepository::class)]
 class ResidentGroup
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
-    #[ORM\Column(length: 50)]
-    private ?string $UUID_group = null;
+    #[ORM\Column(type: UuidType::NAME, unique: true)]
+    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
+    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    //#[ORM\Column(length: 50)]
+    private Uuid $UUID_group;
 
     #[ORM\Column(length: 50)]
     private ?string $name_group = null;
@@ -33,25 +36,23 @@ class ResidentGroup
     /**
      * @var Collection<int, Belong>
      */
-    #[ORM\OneToMany(targetEntity: Belong::class, mappedBy: 'UUID_group')]
-    private Collection $belongs;
+    #[ORM\ManyToMany(targetEntity:User::class, mappedBy:'group')]
+    //#[ORM\JoinTable(name:"belong")]
+    private Collection $users;
 
     public function __construct()
     {
-        $this->belongs = new ArrayCollection();
+        $UUID_group = Uuid::v6();
+        $this->users = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
 
-    public function getUUIDGroup(): ?string
+    public function getUUIDGroup(): ?Uuid
     {
         return $this->UUID_group;
     }
 
-    public function setUUIDGroup(string $UUID_group): static
+    public function setUUIDGroup(Uuid $UUID_group): self
     {
         $this->UUID_group = $UUID_group;
 
@@ -109,27 +110,28 @@ class ResidentGroup
     /**
      * @return Collection<int, Belong>
      */
-    public function getBelongs(): Collection
+    public function getUsers(): Collection
     {
-        return $this->belongs;
+        return $this->users;
     }
 
-    public function addBelong(Belong $belong): static
+    public function addUser(User $user): static
     {
-        if (!$this->belongs->contains($belong)) {
-            $this->belongs->add($belong);
-            $belong->setUUIDGroup($this);
+        if (!$this->users->contains($user)) {
+            $this->users->add($user);
+            $user->addGroup($this);
         }
 
         return $this;
     }
 
-    public function removeBelong(Belong $belong): static
+
+    public function removeBelong(User $user): static
     {
-        if ($this->belongs->removeElement($belong)) {
+        if ($this->users->removeElement($user)) {
             // set the owning side to null (unless already changed)
-            if ($belong->getUUIDGroup() === $this) {
-                $belong->setUUIDGroup(null);
+            if ($user->getUUIDUser() === $this) {
+                $user->setUUIDUser($this);
             }
         }
 

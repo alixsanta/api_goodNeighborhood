@@ -6,6 +6,7 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use PhpParser\Node\Expr\Cast\String_;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Ramsey\Uuid\Doctrine\UuidGenerator;
@@ -14,12 +15,12 @@ use Ramsey\Uuid\UuidInterface;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User
 {
-    #[ORM\Id]
-    #[ORM\Column(type: UuidType::NAME, unique: true)]
+    //#[ORM\Id]
+    #[ORM\Column(type: String::NAME, unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
     //#[ORM\Column(length: 50)]
-    private Uuid $UUID_user;
+    private ?string $uuid_user;
 
     //private UuidInterface $UUID_user;
 
@@ -42,37 +43,42 @@ class User
      * @var Collection<int, Send>
      */
     #[ORM\OneToMany(targetEntity: Send::class, mappedBy: 'user')]
+    #[ORM\JoinColumn(nullable: false)]
     private Collection $sends;
+
 
     /**
      * @var Collection<int, Belong>
      */
-    #[ORM\OneToMany(targetEntity: Belong::class, mappedBy: 'user')]
-    private Collection $belongs;
+    #[ORM\ManyToMany(targetEntity:ResidentGroup::class, inversedBy:'user')]
+    #[ORM\JoinTable(name:"belong")]
+    private Collection $groups;
+
 
     /**
      * @var Collection<int, Recieve>
      */
     #[ORM\OneToMany(targetEntity: Recieve::class, mappedBy: 'user')]
+    #[ORM\JoinColumn(nullable: false)]
     private Collection $recieves;
 
     public function __construct()
     {
-        $UUID_user = Uuid::v6();
+        $uuid_user = Uuid::v6();
+        $this->groups = new ArrayCollection();
         $this->sends = new ArrayCollection();
-        $this->belongs = new ArrayCollection();
         $this->recieves = new ArrayCollection();
     }
 
 
-    public function getUUIDUser(): ?Uuid
+    public function getUUIDUser(): ?string
     {
-        return $this->UUID_user;
+        return $this->uuid_user;
     }
 
-    public function setUUIDUser(UuidInterface $UUID_user): self
+    public function setUUIDUser(string $uuid_user): self
     {
-        $this->UUID_user = $UUID_user;
+        $this->uuid_user = $uuid_user;
 
         return $this;
     }
@@ -169,27 +175,27 @@ class User
     /**
      * @return Collection<int, Belong>
      */
-    public function getBelongs(): Collection
+    public function getGroup(): Collection
     {
-        return $this->belongs;
+        return $this->groups;
     }
 
-    public function addBelong(Belong $belong): static
+    public function addGroup(ResidentGroup $group): static
     {
-        if (!$this->belongs->contains($belong)) {
-            $this->belongs->add($belong);
-            $belong->setUser($this);
+        if (!$this->groups->contains($group)) {
+            $this->groups->add($group);
+            $group->addUser($this);
         }
 
         return $this;
     }
 
-    public function removeBelong(Belong $belong): static
+    public function removeGroup(ResidentGroup $group): static
     {
-        if ($this->belongs->removeElement($belong)) {
+        if ($this->groups->removeElement($group)) {
             // set the owning side to null (unless already changed)
-            if ($belong->getUser() === $this) {
-                $belong->setUser(null);
+            if ($group->getUUIDGroup() === $this) {
+                $group->setUUIDGroup($this);
             }
         }
 

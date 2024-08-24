@@ -6,86 +6,84 @@ use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Ramsey\Uuid\Nonstandard\Uuid;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\Serializer\denormalize;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class UserController extends AbstractController
 {
-    // Display user
-    #[Route('api/user', name: 'user', methods: ['GET'])]
-    public function getUserList(UserRepository $userRepository): JsonResponse
+    // Display all users
+    #[Route('api/user', name: 'users', methods: ['GET'])]
+    public function getAllUser(UserRepository $userRepository, SerializerInterface $serializer): JsonResponse
     {
         $userList = $userRepository->findAll();
-        return new JsonResponse([
-            'liste des utilisateurs' => $userList,
-        ]);
+        $jsonUserList = $serializer->serialize($userList, 'json');
+        return new JsonResponse($jsonUserList, Response::HTTP_OK, [], true);
     }
 
-    // Display user
-    #[Route("/user/{id}", name:"user_show")]
-
-    public function show(User $user): Response
-    {
-        return $this->render('user/show.html.twig', [
-            'user' => $user,
-        ]);
+    // Display user by id
+    #[Route('api/user/{id}', name: 'UserDetails', methods: ['GET'])]
+    public function getUserDetails(Uuid $uuid_user, SerializerInterface $serializer, UserRepository $userRepository){
+        $user = $userRepository->find(($uuid_user));
+        if($user){
+            $jsonUser = $serializer->serialize($user, 'json');
+            return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
+        }
+        return new JsonResponse(null, Response::HTTP_NOT_FOUND);
     }
 
-    // Add user
-    #[Route("/user/new", name:"user_new")]
-
-     public function createUser(Request $request, EntityManagerInterface $entityManager): Response
+    // Create a new user
+    #[Route('api/user', name: 'createUser', methods: ['POST'])]
+    public function createUser(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
     {
-        $user = new User();
-        $form = $this->createForm(UserType::class, $user);
-        $form->handleRequest($request);
+        $data = json_decode($request->getContent(), true);
+        $user = $serializer->deserialize($data, User::class);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($user);
-            $entityManager->flush();
+        $entityManager->persist($user);
+        $entityManager->flush();
 
-            return $this->redirectToRoute('user_index', [], Response::HTTP_SEE_OTHER);
+        $jsonUser = $serializer->serialize($user, 'json');
+        return new JsonResponse($jsonUser, Response::HTTP_CREATED, [], true);
+    }
+
+    // Update a user
+    #[Route('api/user/{id}', name: 'updateUser', methods: ['PUT'])]
+    public function updateUser(Uuid $uuid_user, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UserRepository $userRepository): JsonResponse
+    {
+        $user = $userRepository->find($uuid_user);
+        if (!$user) {
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
         }
 
-        return $this->render('user/new.html.twig', [
-            'user' => $user,
-            'form' => $form->createView(),
+        $data = json_decode($request->getContent(), true);
+        $serializer->deserialize($data, User::class, null, [
+            'object_to_populate' => $user,
         ]);
+
+        $entityManager->flush();
+
+        $jsonUser = $serializer->serialize($user, 'json');
+        return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
     }
-
-    // Update user
-    #[Route("/user/{id}/edit", name:"user_edit")]
-
-    public function edit(Request $request, User $user, EntityManagerInterface $entityManager): Response
+    
+    // Delete a user
+    #[Route('api/user/{id}', name: 'deleteUser', methods: ['DELETE'])]
+    public function deleteUser(Uuid $uuid_user, EntityManagerInterface $entityManager, UserRepository $userRepository): JsonResponse
     {
-        $form = $this->createForm(UserType::class, $user);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            return $this->redirectToRoute('user_index', [], Response::HTTP_SEE_OTHER);
+        $user = $userRepository->find($uuid_user);
+        if (!$user) {
+            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
         }
 
-        return $this->render('user/edit.html.twig', [
-            'user' => $user,
-            'form' => $form->createView(),
-        ]);
-    }
+        $entityManager->remove($user);
+        $entityManager->flush();
 
-    // Delete user
-    #[Route("/user/{id}", name:"user_delete")]
-
-     public function delete(Request $request, User $user, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('delete'.$user->getUUIDUser(), $request->request->get('_token'))) {
-            $entityManager->remove($user);
-            $entityManager->flush();
-        }
-
-        return $this->redirectToRoute('user_index', [], Response::HTTP_SEE_OTHER);
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 }

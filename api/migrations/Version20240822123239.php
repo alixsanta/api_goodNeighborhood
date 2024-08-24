@@ -161,18 +161,22 @@ final class Version20240822123239 extends AbstractMigration
         $this->addSql('ALTER TABLE "user" ALTER uuid_user TYPE UUID');
         $this->addSql('ALTER TABLE "user" ALTER uuid_user TYPE UUID');
         $this->addSql('COMMENT ON COLUMN "user".uuid_user IS \'(DC2Type:uuid)\''); */
-                // Ajouter la colonne id à la table users
-        $this->addSql('ALTER TABLE "user" ADD id INT AUTO_INCREMENT PRIMARY KEY');
+        
+        // Ajouter la colonne id à la table user
+        $this->addSql('ALTER TABLE "user" ADD uuid_user UUID NOT NULL');
+
+        // Définir la colonne UUID comme clé primaire
+        //$this->addSql('ALTER TABLE "user" ADD PRIMARY KEY (UUID_user)');
 
         // Ajouter la colonne id à la table groups
-        $this->addSql('ALTER TABLE residentGroup ADD id INT AUTO_INCREMENT PRIMARY KEY');
+        //$this->addSql('ALTER TABLE residentgroup ADD id SERIAL PRIMARY KEY');
 
         // Ajouter la colonne id à la table belong
-        $this->addSql('ALTER TABLE belong ADD id INT AUTO_INCREMENT PRIMARY KEY');
+        //$this->addSql('ALTER TABLE belong ADD id SERIAL PRIMARY KEY');
 
         // Ajouter les contraintes de clé étrangère
-        $this->addSql('ALTER TABLE belong ADD CONSTRAINT FK_USER FOREIGN KEY (uuid_user) REFERENCES "user"(uuid)');
-        $this->addSql('ALTER TABLE belong ADD CONSTRAINT FK_GROUP FOREIGN KEY (uuid_residentGroup) REFERENCES residentGroup(uuid)');
+        $this->addSql('ALTER TABLE belong ADD CONSTRAINT FK_USER FOREIGN KEY (uuid_user) REFERENCES "user"(uuid_user)');
+        $this->addSql('ALTER TABLE belong ADD CONSTRAINT FK_GROUP FOREIGN KEY (uuid_group) REFERENCES residentgroup(uuid_group)');
     }
 
     public function down(Schema $schema): void
@@ -324,13 +328,17 @@ final class Version20240822123239 extends AbstractMigration
         $this->addSql('CREATE INDEX IDX_7A9C43CF4AE9FB1C ON post_comment_publication (id_comment)');
         $this->addSql('CREATE INDEX IDX_7A9C43CFB72EAA8E ON post_comment_publication (id_publication)');
         $this->addSql('ALTER TABLE post_comment_publication ADD PRIMARY KEY (id_comment, id_publication)'); */
+        
         // Supprimer les contraintes de clé étrangère
-        $this->addSql('ALTER TABLE belong DROP FOREIGN KEY FK_USER');
-        $this->addSql('ALTER TABLE belong DROP FOREIGN KEY FK_GROUP');
+        $this->addSql('ALTER TABLE belong DROP CONSTRAINT FK_USER');
+        $this->addSql('ALTER TABLE belong DROP CONSTRAINT FK_GROUP');
 
         // Supprimer les colonnes id
         $this->addSql('ALTER TABLE "user" DROP COLUMN id');
-        $this->addSql('ALTER TABLE residentGroup DROP COLUMN id');
+        $this->addSql('ALTER TABLE residentgroup DROP COLUMN id');
         $this->addSql('ALTER TABLE belong DROP COLUMN id');
+
+        // Supprimer la colonne UUID
+        $this->addSql('ALTER TABLE "user" DROP uuid_user');
     }
 }
