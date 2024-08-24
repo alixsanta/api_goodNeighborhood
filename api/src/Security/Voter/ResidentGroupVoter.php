@@ -7,7 +7,7 @@ use App\Repository\ResidentGroupRepository;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Bundle\SecurityBundle\Security;
 
 
 class ResidentGroupVoter extends Voter
@@ -17,7 +17,7 @@ class ResidentGroupVoter extends Voter
     public const SHOW = 'RESIDENT_GROUP_SHOW';
     public const LIST = 'RESIDENT_GROUP_LIST';
 
-    public function __construct(private readonly ResidentGroupRepository $residentGroupRepository, Security $security)
+    public function __construct(private readonly ResidentGroupRepository $residentGroupRepository, private readonly Security $security)
     {
     }
 
@@ -78,7 +78,7 @@ class ResidentGroupVoter extends Voter
     private function allowList(): bool
     {
 
-        if ($this->$security->isGranted('ROLE_ADMINISTRATOR')) {
+        if ($this->security->isGranted('ROLE_ADMINISTRATOR')) {
             return true;
         }
 
