@@ -74,7 +74,6 @@ class ResidentGroupController extends AbstractController
     
         $residentGroup->setNameGroup($updatedResidentGroup->getNameGroup());
         $residentGroup->setImageGroup($updatedResidentGroup->getImageGroup());
-        $residentGroup->setPrice($updatedResidentGroup->getPrice());
     
         $entityManager->flush();
     

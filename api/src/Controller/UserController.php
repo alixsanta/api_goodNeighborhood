@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Service\PasswordService;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,6 +20,12 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer as NormalizerAbst
 
 class UserController extends AbstractController
 {
+
+    public function __construct(private readonly PasswordService $passwordService)
+    {
+
+    }
+
     // Display user
     #[Route('api/user', name: 'user', methods: ['GET'])]
     public function getUserList(UserRepository $userRepository): JsonResponse
@@ -86,8 +93,9 @@ class UserController extends AbstractController
             return new JsonResponse(['error' => 'Missing required fields'], 400);
         }
 
+        $this->passwordService->validatePasswordComplexity($plaintextPassword);
         $user = new User();
-        $hashedPassword = $passwordHasher->hashPassword($user, $plaintextPassword);
+        $hashedPassword = $this->passwordService->hashPassword($user, $plaintextPassword);
 
         $user->setFirstNameUser($firstName);
         $user->setLastNameUser($lastName);
