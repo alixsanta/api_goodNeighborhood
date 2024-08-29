@@ -55,5 +55,5 @@ class PasswordServiceTest extends KernelTestCase
             ->willReturn(true);
         $isValid = $this->passwordService->isPasswordValid($userMock, 'plainPassword');
         $this->assertTrue($isValid);
-}
     }
+}

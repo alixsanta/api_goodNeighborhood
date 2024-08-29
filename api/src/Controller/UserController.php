@@ -20,13 +20,7 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer as NormalizerAbst
 
 class UserController extends AbstractController
 {
-
-    public function __construct(private readonly PasswordService $passwordService)
-    {
-
-    }
-
-    // Display user
+    // Display all users
     #[Route('api/user', name: 'user', methods: ['GET'])]
     public function getUserList(UserRepository $userRepository): JsonResponse
     {
@@ -79,7 +73,10 @@ class UserController extends AbstractController
 
     // Create User
     #[Route('/api/create', name: 'create', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $entityManager, SerializerInterface $serializer, UserPasswordHasherInterface $passwordHasher): JsonResponse
+    public function create(Request $request, 
+                        EntityManagerInterface $entityManager, 
+                        SerializerInterface $serializer, 
+                        UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $requestData = json_decode($request->getContent(), true);
         
@@ -108,6 +105,11 @@ class UserController extends AbstractController
 
         $data = $serializer->serialize($user, 'json');
 
-        return new JsonResponse(['message' => 'Utilisateur créé avec succès', 'user' => json_decode($data)], 201);
+        return new JsonResponse(['message' => 'Utilisateur créé avec succès', 'user' => json_decode($data)], 201); 
+    }
+    
+    public function __construct(private readonly PasswordService $passwordService)
+    {
+
     }
 }

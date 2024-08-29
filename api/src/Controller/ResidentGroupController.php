@@ -64,7 +64,10 @@ class ResidentGroupController extends AbstractController
     
     
     #[Route('/{id}', name: 'update', methods: ['PUT'])]
-    public function update(ResidentGroup $residentGroup, Request $request, EntityManagerInterface $entityManager, SerializerInterface $serializer): Response
+    public function update(ResidentGroup $residentGroup, 
+                            Request $request, 
+                            EntityManagerInterface $entityManager, 
+                            SerializerInterface $serializer): Response
     {
             if(!$this->isGranted(ResidentGroupVoter::MODIFY)) {
                 throw $this->createNotFoundException();
@@ -77,6 +80,6 @@ class ResidentGroupController extends AbstractController
     
         $entityManager->flush();
     
-        return new Response('Groupe de résidents mis à jour avec succès !', 200);
+        return new Response('Groupe de résidents a été mis à jour.', 200);
     }
 }
